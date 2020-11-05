@@ -38,14 +38,13 @@ pip install numpy==1.19 scikit-learn==0.23.2 pandas==1.1.0\
 
 ## Generate the training datasets
 
-Run the following script in order to create AnDi datasets of track length 50, 200, 400 and 600 for the training of the 4 models.
-The first argument represents the number of points in each dataset.
+Run the following script in order to create AnDi datasets of track length 50, 200, 400 and 600 for the training of the 4 models. The first argument represents the number of points to create in each dataset.
 
 ```
 python generate_training_datasets.py 15000000
 ```
 
-The `development_dataset_for_training` and `challenge_for_scoring` datasets have to be placed in `data/` folder.
+The `development_dataset_for_training` and `challenge_for_scoring` datasets have to be placed in the `data/` folder.
 
 ## Run the script
 
