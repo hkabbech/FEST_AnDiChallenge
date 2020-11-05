@@ -25,7 +25,8 @@ conda activate andi-env
 ```
 pip install numpy==1.19 scikit-learn==0.23.2 pandas==1.1.0\
             tqdm keras==2.4.3 tensorflow-gpu==2.2.0\
-            matplotlib==3.3.0 docopt schema
+            matplotlib==3.3.0 docopt schema\
+            fbm andi-datasets
 ```
 
 ## Generate the training datasets
