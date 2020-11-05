@@ -10,13 +10,20 @@ The task 1 consists in the inference of the anomalous diffusion exponent α whil
 
 The principle of the FEST (Feature Extraction Stack LSTM) method is first the measurement at each point of 6 features which vary depending on the dimension; These features could be x, y or z displacements, distances, mean of distances and/or angle. Afterwards, the input of features is passed through a neural network of stack bidirectional LSTM and Dense layers to predict either the alpha exponent (task 1) or the diffusion model (task 2). Because this network is limited to one track length during the training, we decided to train 4 different model each of which having a different track length (50, 200, 400 and 600), finally a combination of all 4 models is used during the prediction of tracks with various length.
 
+## Clone the repository
+
+```
+git clone https://github.com/hkabbech/FEST_AnDiChallenge.git
+cd FEST_AnDiChallenge
+```
+
 
 ## Install the required python libraries
 
 ### By creating a conda environement
 
 ```
-conda env create --file environment.yml
+conda env create --file environment.yaml
 conda activate andi-env
 ```
 
@@ -32,9 +39,10 @@ pip install numpy==1.19 scikit-learn==0.23.2 pandas==1.1.0\
 ## Generate the training datasets
 
 Run the following script in order to create AnDi datasets of track length 50, 200, 400 and 600 for the training of the 4 models.
+The first argument represents the number of points in each dataset.
 
 ```
-./generate_training_datasets
+python generate_training_datasets.py 15000000
 ```
 
 The `development_dataset_for_training` and `challenge_for_scoring` datasets have to be placed in `data/` folder.
@@ -45,7 +53,7 @@ The `development_dataset_for_training` and `challenge_for_scoring` datasets have
 
 ```
 Usage:
-    ./fest.py TASK DIM
+    python fest.py TASK DIM
 
 Arguments:
     TASK                                  Task number. Should be 1 or 2.
