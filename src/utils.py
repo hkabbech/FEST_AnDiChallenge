@@ -1,17 +1,25 @@
+"""
+.. module:: utils.py
+   :synopsis: This module implements main functions of the main script
+"""
+
+# Third-party modules
 import pickle
 import numpy as np
 from numpy.lib.recfunctions import structured_to_unstructured, append_fields
 import matplotlib.pyplot as plt
 from keras.utils import to_categorical
 
+# Local modules
 from src.track import Track
-
-
 
 def retrieve_track_list(dataset_type, pars):
     """Retrieve list of Track objects"""
     path = pars[f"{dataset_type}_dataset"]
-    filename = f'{path}/track_list_dim{pars["dim"]}.p'
+    if dataset_type == 'test':
+        filename = f'{path}/track_list_task{pars["task"]}_dim{pars["dim"]}.p'
+    else:
+        filename = f'{path}/track_list_dim{pars["dim"]}.p'
     try:
         track_list = pickle.load(open(filename, 'rb'))
     except FileNotFoundError:
@@ -99,9 +107,15 @@ def extract_labels(track_list):
     return label_set
 
 def test_track(table, pars):
-    if (pars['dim'] == 1 and abs(table['x'][-1]) < pars['threshold']) or\
-       (pars['dim'] == 2 and abs(table['x'][-1]) < pars['threshold'] and abs(table['y'][-1]) < pars['threshold']) or\
-       (pars['dim'] == 3 and abs(table['x'][-1]) < pars['threshold'] and abs(table['y'][-1]) < pars['threshold'] and abs(table['z'][-1]) < pars['threshold']):
+    if (pars['dim'] == 1\
+        and abs(table['x'][-1]) < pars['length_threshold'])\
+        or (pars['dim'] == 2\
+        and abs(table['x'][-1]) < pars['length_threshold']\
+        and abs(table['y'][-1]) < pars['length_threshold'])\
+        or (pars['dim'] == 3\
+        and abs(table['x'][-1]) < pars['length_threshold']\
+        and abs(table['y'][-1]) < pars['length_threshold']\
+        and abs(table['z'][-1]) < pars['length_threshold']):
         return True
     return False
 
@@ -111,7 +125,7 @@ def prepare_dataset(dataset_type, pars):
     track_list = retrieve_track_list(dataset_type, pars)
     # Extract feature values
     feature_set = np.array(extract_features(track_list, pars))
-    feature_set = feature_set.reshape(-1, pars['track_len'], pars['num_features'])
+    feature_set = feature_set.reshape(-1, pars['track_len']-2, pars['num_features'])
     # Extract labels
     label_set = extract_labels(track_list)
     if pars['task'] == 2:
@@ -126,14 +140,14 @@ def prepare_dataset(dataset_type, pars):
     remove_model = []
     for n, track in enumerate(track_list):
         table = track.table[pars['lim'][0]:pars['lim'][1]]
-        if test_track(table, pars['length_threshold'], pars):
+        if test_track(table, pars):
             keep.append(n)
         else:
             remove_model.append(track.label)
     track_list = track_list[keep]
     feature_set = feature_set[keep]
     label_set = label_set[keep]
-    print(f'Number of track removed due to big scale {len(remove_model)} (mean: {np.mean(remove_model)})')
+    print(f'Number of track removed due to big scale {len(remove_model)} (mean: {np.mean(remove_model):.3})')
     return {'track_list': track_list, 'feature': feature_set, 'label': label_set}
 
 def plot_training_curves(history, pars, best_epoch):
@@ -184,11 +198,11 @@ def plot_alpha_pred_label(predictions, labels, pars):
     plt.xlabel(r'$\mathrm{\alpha_{GT}}$')
     plt.gca().set_aspect('equal')
     plt.title(f"Alpha prediction (MAE={np.mean(abs(predictions-labels)):.3})")
-    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}/LSTM{pars["track_len"]}_alpha_pred_label.png', bbox_inches='tight')
+    plt.savefig(f'{pars["save_path"]}/alpha_pred_label.png', bbox_inches='tight')
     plt.close()
 
 
-def plot_confusion_matrix(matrix, model_name, f1score, pars):
+def plot_confusion_matrix(matrix, f1score, pars):
     """Plot confusion matrix"""
     _, axis = plt.subplots(figsize=(7, 7))
     axis.matshow(matrix)
@@ -199,5 +213,5 @@ def plot_confusion_matrix(matrix, model_name, f1score, pars):
     axis.set_xlabel('Predicted class', fontsize=12)
     axis.xaxis.set_ticks_position('bottom')
     plt.title(f'Confusion matrix (F1={f1score})', fontsize=16)
-    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}/LSTM{pars["track_len"]}_{model_name}_confusion_matrix.png')
+    plt.savefig(f'{pars["save_path"]}/confusion_matrix.png')
     plt.close()

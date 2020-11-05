@@ -13,3 +13,5 @@ dependencies:
 - keras=2.4.3
 - tensorflow-gpu=2.2.0
 - matplotlib=3.3.0
+- docopt
+- schema

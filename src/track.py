@@ -1,6 +1,6 @@
 """
 .. module:: track.py
-   :synopsis: This module implements Tracklet and Track classes
+   :synopsis: This module implements the Track class
 """
 
 # Third-party modules
@@ -13,16 +13,6 @@ import numpy as np
 from numpy.lib.recfunctions import append_fields
 from scipy.optimize import curve_fit
 
-# Local modules
-# from src.utils import f_slope, f_slope_intercept
-
-def f_slope(x, a):
-    """Linear regression y=ax"""
-    return a*x
-
-def f_slope_intercept(x, a, b):
-    """Linear regression y=ax"""
-    return a*x + b
 
 class Track:
     """
