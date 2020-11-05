@@ -8,7 +8,7 @@
 The FEST method was implemented to solve task 1 and 2 in all 1, 2 or 3 dimensions from the Anomalous Diffusion challenge.
 The task 1 consists in the inference of the anomalous diffusion exponent α while the task 2 is a classification challenge of diffusion models.
 
-As indicated by its name, the principle of the FEST (Feature Extraction Stack LSTM) method is first the measurement at each point of 6 features which vary depending on the dimension; These features could be x, y or z displacements, distances, mean of distances and/or angle. Afterwards, the input of features is passed through a neural network of stack bidirectional LSTM and Dense layers to predict either the alpha exponent or the diffusion model. Because this network is limited to one track length during the training, we decided to train 4 different model each of which having a different track length (50, 200, 400 and 600), finally a combination of all 4 models is used during the prediction of tracks with various length.
+The principle of the FEST (Feature Extraction Stack LSTM) method is first the measurement at each point of 6 features which vary depending on the dimension; These features could be x, y or z displacements, distances, mean of distances and/or angle. Afterwards, the input of features is passed through a neural network of stack bidirectional LSTM and Dense layers to predict either the alpha exponent (task 1) or the diffusion model (task 2). Because this network is limited to one track length during the training, we decided to train 4 different model each of which having a different track length (50, 200, 400 and 600), finally a combination of all 4 models is used during the prediction of tracks with various length.
 
 
 ## Install the required python libraries
