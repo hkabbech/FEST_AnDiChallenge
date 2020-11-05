@@ -106,90 +106,90 @@ if __name__ == "__main__":
     ALL_PREDICT_FUNC = {}
 
     for track_len in PARS['track_len_list']:
+        if not os.path.isfile(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_last_model.h5'):
+            print(f'\n#   TRAINING OF THE STACK LSTM WITH TRACK LENGTH = {track_len:<6}#')
 
-        print(f'\n#   TRAINING OF THE STACK LSTM WITH TRACK LENGTH = {track_len:<6}#')
-        os.makedirs(f'{PARS["save_path"]}/LSTM{track_len}', exist_ok=True)
-
-        PARS['track_len'] = track_len
-        PARS['training_dataset'] = f'{PARS["training_datasets"]}/LSTM{track_len}/training'
-        PARS['validation_dataset'] = f'{PARS["training_datasets"]}/LSTM{track_len}/validation'
-
-
-        ## PREPARE THE TRAINING AND VALIDATION DATASETS
-        print('\nFeature Extraction and preparation of the training and validation datasets...')
-        TRAIN_SET = prepare_dataset('training', PARS)
-        VAL_SET = prepare_dataset('validation', PARS)
+            os.makedirs(f'{PARS["save_path"]}/LSTM{track_len}', exist_ok=True)
+            PARS['track_len'] = track_len
+            PARS['training_dataset'] = f'{PARS["training_datasets"]}/LSTM{track_len}/training'
+            PARS['validation_dataset'] = f'{PARS["training_datasets"]}/LSTM{track_len}/validation'
 
 
-        ## NEURAL NETWORK
-        if PARS['task'] == 1:
-            MODEL = Sequential()
-            MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Bidirectional(LSTM(2**5, return_sequences=True, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Bidirectional(LSTM(2**4, return_sequences=False, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Dense(2**5, activation='relu'))
-            MODEL.add(Dropout(0.2))
-            MODEL.add(Dense(2**4, activation='relu'))
-            MODEL.add(Dropout(0.2))
-            MODEL.add(Dense(2**3, activation='relu'))
-            MODEL.add(Dropout(0.1))
-            MODEL.add(Dense(1))
-            MODEL.compile(loss='mean_squared_error', optimizer='adam', metrics=['MAE', 'accuracy'])
-            MODEL.summary()
-            with open(f'{PARS["save_path"]}/task1_network_summary.txt', 'w') as file:
-                with redirect_stdout(file):
-                    MODEL.summary()
+            ## PREPARATION OF THE TRAINING AND VALIDATION DATASETS
+            print('\nFeature Extraction and preparation of the training and validation datasets...')
+            TRAIN_SET = prepare_dataset('training', PARS)
+            VAL_SET = prepare_dataset('validation', PARS)
 
 
-        elif PARS['task'] == 2:
-            MODEL = Sequential()
-            MODEL.add(Bidirectional(LSTM(2**7, return_sequences=True, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Bidirectional(LSTM(2**5, return_sequences=False, dropout=0.1),
-                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
-            MODEL.add(Dense(2**6, activation='tanh'))
-            MODEL.add(Dropout(0.2))
-            MODEL.add(Dense(2**5, activation='tanh'))
-            MODEL.add(Dropout(0.2))
-            MODEL.add(Dense(2**4, activation='tanh'))
-            MODEL.add(Dropout(0.1))
-            MODEL.add(Dense(PARS['num_states'], activation='softmax'))
-            MODEL.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', 'MAE'])
-            MODEL.summary()
-            with open(f'{PARS["save_path"]}/task2_network_summary.txt', 'w') as file:
-                with redirect_stdout(file):
-                    MODEL.summary()
-
-        ## TRAIN
-        print('\nTraining of the model...')
-        CALLBACKS = [
-            EarlyStopping(monitor='val_loss', patience=PARS['patience'], min_delta=1e-4, verbose=1),
-            ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, min_lr=1e-9, verbose=1),
-            ModelCheckpoint(filepath=f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_best_model.h5',
-                            monitor='val_loss', save_best_only=True, verbose=1)
-        ]
-
-        HISTORY = MODEL.fit(x=TRAIN_SET['feature'],
-                            y=TRAIN_SET['label'],
-                            epochs=PARS['max_epochs'],
-                            callbacks=CALLBACKS,
-                            batch_size=PARS['batch_size'],
-                            shuffle=True,
-                            validation_data=(VAL_SET['feature'], VAL_SET['label']),
-                            verbose=2)
+            ## NEURAL NETWORK
+            if PARS['task'] == 1:
+                MODEL = Sequential()
+                MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Bidirectional(LSTM(2**5, return_sequences=True, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Bidirectional(LSTM(2**4, return_sequences=False, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Dense(2**5, activation='relu'))
+                MODEL.add(Dropout(0.2))
+                MODEL.add(Dense(2**4, activation='relu'))
+                MODEL.add(Dropout(0.2))
+                MODEL.add(Dense(2**3, activation='relu'))
+                MODEL.add(Dropout(0.1))
+                MODEL.add(Dense(1))
+                MODEL.compile(loss='mean_squared_error', optimizer='adam', metrics=['MAE', 'accuracy'])
+                MODEL.summary()
+                with open(f'{PARS["save_path"]}/task1_network_summary.txt', 'w') as file:
+                    with redirect_stdout(file):
+                        MODEL.summary()
 
 
-        ## SAVE
-        BEST_EPOCH = len(HISTORY.history['loss']) - PARS['patience']
-        plot_training_curves(HISTORY, PARS, best_epoch=BEST_EPOCH)
-        MODEL.save(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_last_model.h5')
-        with open(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_history.p', 'wb') as file:
-            pickle.dump(HISTORY.history, file)
+            elif PARS['task'] == 2:
+                MODEL = Sequential()
+                MODEL.add(Bidirectional(LSTM(2**7, return_sequences=True, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Bidirectional(LSTM(2**5, return_sequences=False, dropout=0.1),
+                                        input_shape=(None, PARS['num_features']), merge_mode='concat'))
+                MODEL.add(Dense(2**6, activation='tanh'))
+                MODEL.add(Dropout(0.2))
+                MODEL.add(Dense(2**5, activation='tanh'))
+                MODEL.add(Dropout(0.2))
+                MODEL.add(Dense(2**4, activation='tanh'))
+                MODEL.add(Dropout(0.1))
+                MODEL.add(Dense(PARS['num_states'], activation='softmax'))
+                MODEL.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', 'MAE'])
+                MODEL.summary()
+                with open(f'{PARS["save_path"]}/task2_network_summary.txt', 'w') as file:
+                    with redirect_stdout(file):
+                        MODEL.summary()
+
+            ## TRAINING
+            print('\nTraining of the model...')
+            CALLBACKS = [
+                EarlyStopping(monitor='val_loss', patience=PARS['patience'], min_delta=1e-4, verbose=1),
+                ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, min_lr=1e-9, verbose=1),
+                ModelCheckpoint(filepath=f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_best_model.h5',
+                                monitor='val_loss', save_best_only=True, verbose=1)
+            ]
+
+            HISTORY = MODEL.fit(x=TRAIN_SET['feature'],
+                                y=TRAIN_SET['label'],
+                                epochs=PARS['max_epochs'],
+                                callbacks=CALLBACKS,
+                                batch_size=PARS['batch_size'],
+                                shuffle=True,
+                                validation_data=(VAL_SET['feature'], VAL_SET['label']),
+                                verbose=2)
+
+
+            ## SAVE
+            BEST_EPOCH = len(HISTORY.history['loss']) - PARS['patience']
+            plot_training_curves(HISTORY, PARS, best_epoch=BEST_EPOCH)
+            MODEL.save(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_last_model.h5')
+            with open(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_history.p', 'wb') as file:
+                pickle.dump(HISTORY.history, file)
 
         MODEL = load_model(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_best_model.h5')
         @tf.function(experimental_relax_shapes=True)
@@ -220,6 +220,7 @@ if __name__ == "__main__":
     if PARS['task'] == 1:
         PRED_TEST = []
         REMOVE_TRACK = []
+        print('\nPrediction on the test dataset...')
         with tqdm(total=len(TEST_SET['track_list'])) as pbar:
             for N, track in enumerate(TEST_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
@@ -233,17 +234,18 @@ if __name__ == "__main__":
                     elif track.num_frames > 500:
                         PRED_TEST.append(float(ALL_PREDICT_FUNC['LSTM600'](TEST_SET['feature'][N])))
                 else:
-                    REMOVE_TRACK.append(track.label['model'])
+                    REMOVE_TRACK.append(track.label)
                     PRED_TEST.append(2)
                 pbar.update(1)
             print(f'{len(REMOVE_TRACK)} tracks removed (mean alpha {np.mean(REMOVE_TRACK):.3})')
 
             PRED_TEST = np.array(PRED_TEST)
-            MAE = np.mean(abs(PRED_TEST - TEST_SET['label']))
-            print(f'\nMAE = {MAE:.5}')
+            MAE_SCORE = np.mean(abs(PRED_TEST - TEST_SET['label']))
+            print(f'MAE = {MAE_SCORE:.3}')
             plot_alpha_pred_label(PRED_TEST, TEST_SET['label'], PARS)
 
         PRED_SCORING = []
+        print('\nPrediction on the scoring dataset...')
         with tqdm(total=len(SCORE_SET['track_list'])) as pbar:
             for N, track in enumerate(SCORE_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
@@ -268,6 +270,7 @@ if __name__ == "__main__":
     elif PARS['task'] == 2:
         PRED_TEST = []
         REMOVE_TRACK = []
+        print('\nPrediction on the test dataset...')
         with tqdm(total=len(TEST_SET['track_list'])) as pbar:
             for N, track in enumerate(TEST_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
@@ -287,12 +290,13 @@ if __name__ == "__main__":
             print(f'{len(REMOVE_TRACK)} tracks removed (mean model {np.mean(REMOVE_TRACK):.3})')
 
             F1_SCORE = f1_score(PRED_TEST, TEST_SET['label'], average='micro')
-            print(f'\nF1 = {F1_SCORE}')
+            print(f'F1 = {F1_SCORE:.3}')
             CONF_MATRIX = confusion_matrix(PRED_TEST, TEST_SET['label'])
             CONF_MATRIX = CONF_MATRIX/np.sum(to_categorical(TEST_SET['label']), axis=0)*100
             plot_confusion_matrix(CONF_MATRIX, F1_SCORE, PARS)
 
         PRED_SCORING = []
+        print('\nPrediction on the scoring dataset...')
         with tqdm(total=len(SCORE_SET['track_list'])) as pbar:
             for N, track in enumerate(SCORE_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]

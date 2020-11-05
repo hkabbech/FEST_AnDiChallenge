@@ -16,7 +16,7 @@ from src.track import Track
 def retrieve_track_list(dataset_type, pars):
     """Retrieve list of Track objects"""
     path = pars[f"{dataset_type}_dataset"]
-    if dataset_type == 'test':
+    if dataset_type == 'test' or dataset_type == 'training':
         filename = f'{path}/track_list_task{pars["task"]}_dim{pars["dim"]}.p'
     else:
         filename = f'{path}/track_list_dim{pars["dim"]}.p'
