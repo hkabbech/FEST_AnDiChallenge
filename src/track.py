@@ -4,15 +4,12 @@
 """
 
 # Third-party modules
-import math as m
-from random import randint, uniform
+from random import randint
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from numpy.lib.recfunctions import append_fields
-from scipy.optimize import curve_fit
-
 
 class Track:
     """
@@ -256,9 +253,9 @@ class Track:
 
         cmap = plt.cm.get_cmap('rainbow', self.num_frames+1)
         if self.dim == 1:
-            plt.scatter([i for i in range(self.num_frames)], self.table['x'], lw=0.1, s=70,
-                        c=[i for i in range(self.num_frames)], cmap=cmap)
-            plt.plot([i for i in range(self.num_frames)], self.table['x'], '-', c='black', alpha=0.5)
+            plt.scatter(range(self.num_frames), self.table['x'], lw=0.1, s=70,
+                        c=range(self.num_frames), cmap=cmap)
+            plt.plot(range(self.num_frames), self.table['x'], '-', c='black', alpha=0.5)
             plt.gca().set_aspect('equal')
             plt.ylabel('X')
             divider = make_axes_locatable(plt.gca())
@@ -266,8 +263,8 @@ class Track:
             plt.colorbar(label='Frame', cax=cax)
             plt.show()
         elif self.dim == 2:
-            plt.scatter(self.table['x'], self.table['y'], lw=0.1, s=70,
-                        c=[i for i in range(self.num_frames)], cmap=cmap)
+            plt.scatter(self.table['x'], self.table['y'], lw=0.1, s=70, c=range(self.num_frames),
+                        cmap=cmap)
             plt.plot(self.table['x'], self.table['y'], '-', c='black', alpha=0.5)
             plt.gca().set_aspect('equal')
             plt.xlabel('X')
@@ -277,13 +274,13 @@ class Track:
             plt.colorbar(label='Frame', cax=cax)
             plt.show()
         elif self.dim == 3:
-            fig = plt.figure()
-            ax = plt.axes(projection="3d")
-            sca = ax.scatter3D(self.table['x'], self.table['y'], self.table['z'], lw=0.1, s=70,
-                        c=[i for i in range(self.num_frames)], cmap=cmap)
-            ax.plot3D(self.table['x'], self.table['y'], self.table['z'], '-', c='black', alpha=0.5)
+            plt.figure()
+            axs = plt.axes(projection="3d")
+            axs.scatter3D(self.table['x'], self.table['y'], self.table['z'], lw=0.1, s=70,
+                         c=range(self.num_frames), cmap=cmap)
+            axs.plot3D(self.table['x'], self.table['y'], self.table['z'], '-', c='black', alpha=0.5)
             # ax.set_aspect('equal')
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            ax.set_zlabel('Z')
+            axs.set_xlabel('X')
+            axs.set_ylabel('Y')
+            axs.set_zlabel('Z')
             plt.show()

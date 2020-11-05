@@ -147,7 +147,7 @@ def prepare_dataset(dataset_type, pars):
     track_list = track_list[keep]
     feature_set = feature_set[keep]
     label_set = label_set[keep]
-    print(f'Number of track removed due to big scale {len(remove_model)} (mean: {np.mean(remove_model):.3})')
+    print(f'{len(remove_model)} Number of track removed due to big scale (label mean: {np.mean(remove_model):.3})')
     return {'track_list': track_list, 'feature': feature_set, 'label': label_set}
 
 def plot_training_curves(history, pars, best_epoch):
@@ -163,7 +163,7 @@ def plot_training_curves(history, pars, best_epoch):
     plt.legend(loc='upper right')
     plt.xlim([x_axis[0], x_axis[-1]])
     plt.xticks(np.arange(x_axis[0], x_axis[-1], 5))
-    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}_loss_curve.png', bbox_inches='tight')
+    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}/LSTM{pars["track_len"]}_loss_curve.png', bbox_inches='tight')
     plt.close()
     # Plot accuracy curve
     plt.plot(x_axis, history.history['accuracy'], label='Training')
@@ -175,7 +175,7 @@ def plot_training_curves(history, pars, best_epoch):
     plt.legend(loc='lower right')
     plt.xlim([x_axis[0], x_axis[-1]])
     plt.xticks(np.arange(x_axis[0], x_axis[-1], 5))
-    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}_acc_curve.png', bbox_inches='tight')
+    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}/LSTM{pars["track_len"]}_acc_curve.png', bbox_inches='tight')
     plt.close()
     # Plot MAE
     plt.plot(x_axis, history.history['MAE'], label='Training')
@@ -187,7 +187,7 @@ def plot_training_curves(history, pars, best_epoch):
     plt.legend(loc='upper right')
     plt.xlim([x_axis[0], x_axis[-1]])
     plt.xticks(np.arange(x_axis[0], x_axis[-1], 5))
-    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}_MAE_curve.png', bbox_inches='tight')
+    plt.savefig(f'{pars["save_path"]}/LSTM{pars["track_len"]}/LSTM{pars["track_len"]}_MAE_curve.png', bbox_inches='tight')
     plt.close()
 
 

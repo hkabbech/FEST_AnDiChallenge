@@ -1,9 +1,6 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 """
 
-    
+    FEST method for tasks 1 & 2 of the Anomalous Diffusion challenge.
 
     Usage:
         ./fest.py TASK DIM
@@ -23,9 +20,9 @@ __authors__ = "Hélène Kabbech"
 import os
 import sys
 import pickle
+from contextlib import redirect_stdout
 from docopt import docopt
 from schema import Schema, And, Use, SchemaError
-from contextlib import redirect_stdout
 import numpy as np
 from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
@@ -38,7 +35,9 @@ import tensorflow as tf
 from tqdm import tqdm
 
 # Local modules
-from src.utils import *
+from src.utils import retrieve_track_list, extract_features, extract_labels, test_track,\
+                      prepare_dataset, plot_training_curves, plot_alpha_pred_label,\
+                      plot_confusion_matrix
 
 
 # With a GPU usage:
@@ -54,18 +53,18 @@ if __name__ == "__main__":
     #################
 
     ARGS = docopt(__doc__, version='fest 1.0')
-    schema = Schema({
+    SCHEMA = Schema({
         'TASK': And(Use(int), lambda n: 1 <= n <= 2, error='TASK should be 1 or 2.'),
         'DIM': And(Use(int), lambda n: 1 <= n <= 3, error='DIM should be 1, 2 or 3.')
     })
     try:
-        schema.validate(ARGS)
+        SCHEMA.validate(ARGS)
     except SchemaError as err:
-        exit(err)
+        sys.exit(err)
 
     PARS = {
-        'task': int(ARGS[0]),
-        'dim': int(ARGS[1]),
+        'task': int(ARGS['TASK']),
+        'dim': int(ARGS['DIM']),
         'track_len_list': [50, 200, 400, 600],
         'nb_points': {'train': 15000000, 'val': 3000000},
         'models': ['ATTM', 'CTRW', 'FBM', 'LW', 'SBM'],
@@ -93,9 +92,9 @@ if __name__ == "__main__":
     PARS.update({
         'num_states': len(PARS['models']),
         'num_features': len(PARS['features']),
-        'training_datasets': f'data/training_datasets/',
-        'test_dataset': f'data/development_dataset_for_training/',
-        'scoring_dataset': f'data/challenge_for_scoring/',
+        'training_datasets': 'data/training_datasets/',
+        'test_dataset': 'data/development_dataset_for_training/',
+        'scoring_dataset': 'data/challenge_for_scoring/',
         'save_path': f'results/task{PARS["task"]}_dim{PARS["dim"]}'
     })
     os.makedirs(PARS['save_path'], exist_ok=True)
@@ -155,8 +154,8 @@ if __name__ == "__main__":
 
     for track_len in PARS['track_len_list']:
 
-        print(f'#   TRAINING OF THE STACK LSTM WITH TRACK LENGTH = {track_len:<6}#\n')
-
+        print(f'\n#   TRAINING OF THE STACK LSTM WITH TRACK LENGTH = {track_len:<6}#')
+        os.makedirs(f'{PARS["save_path"]}/LSTM{track_len}', exist_ok=True)
 
         PARS['track_len'] = track_len
         PARS['training_dataset'] = f'{PARS["training_datasets"]}/LSTM{track_len}/training'
@@ -170,6 +169,7 @@ if __name__ == "__main__":
 
 
         ## TRAIN
+        print('\nTraining of the model...')
         CALLBACKS = [
             EarlyStopping(monitor='val_loss', patience=PARS['patience'], min_delta=1e-4, verbose=1),
             ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, min_lr=1e-9, verbose=1),
@@ -186,16 +186,15 @@ if __name__ == "__main__":
                             validation_data=(VAL_SET['feature'], VAL_SET['label']),
                             verbose=2)
 
+
+        ## SAVE
         BEST_EPOCH = len(HISTORY.history['loss']) - PARS['patience']
         plot_training_curves(HISTORY, PARS, best_epoch=BEST_EPOCH)
         MODEL.save(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_last_model.h5')
         with open(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_history.p', 'wb') as file:
             pickle.dump(HISTORY.history, file)
 
-
-        ## KEEP IN MEMORY PREDICT FUNCTION
         MODEL = load_model(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_best_model.h5')
-
         @tf.function(experimental_relax_shapes=True)
         def predict(array):
             """
@@ -223,7 +222,7 @@ if __name__ == "__main__":
 
     if PARS['task'] == 1:
         PRED_TEST = []
-        remove_track = []
+        REMOVE_TRACK = []
         with tqdm(total=len(TEST_SET['track_list'])) as pbar:
             for N, track in enumerate(TEST_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
@@ -237,15 +236,15 @@ if __name__ == "__main__":
                     elif track.num_frames > 500:
                         PRED_TEST.append(float(ALL_PREDICT_FUNC['LSTM600'](TEST_SET['feature'][N])))
                 else:
-                    remove_track.append(track.label['model'])
+                    REMOVE_TRACK.append(track.label['model'])
                     PRED_TEST.append(2)
                 pbar.update(1)
-            print(f'Number of tracks removed: {len(remove_track)} (mean alpha {np.mean(remove_track):.3})')
+            print(f'{len(REMOVE_TRACK)} tracks removed (mean alpha {np.mean(REMOVE_TRACK):.3})')
 
-            PRED = np.array(PRED)
-            MAE = np.mean(abs(PRED - TEST_SET['label']))
+            PRED_TEST = np.array(PRED_TEST)
+            MAE = np.mean(abs(PRED_TEST - TEST_SET['label']))
             print(f'\nMAE = {MAE:.5}')
-            plot_alpha_pred_label(PRED, TEST_SET['label'], PARS)
+            plot_alpha_pred_label(PRED_TEST, TEST_SET['label'], PARS)
 
         PRED_SCORING = []
         with tqdm(total=len(SCORE_SET['track_list'])) as pbar:
@@ -271,7 +270,7 @@ if __name__ == "__main__":
 
     elif PARS['task'] == 2:
         PRED_TEST = []
-        remove_track = []
+        REMOVE_TRACK = []
         with tqdm(total=len(TEST_SET['track_list'])) as pbar:
             for N, track in enumerate(TEST_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
@@ -285,20 +284,20 @@ if __name__ == "__main__":
                     elif track.num_frames > 500:
                         PRED_TEST.append(np.argmax(ALL_PREDICT_FUNC['LSTM600'](TEST_SET['feature'][N])))
                 else:
-                    remove_track.append(track.label)
+                    REMOVE_TRACK.append(track.label)
                     PRED_TEST.append(3)
                 pbar.update(1)
-            print(f'Number of tracks removed: {len(remove_track)} (mean model {np.mean(remove_track)})')
+            print(f'{len(REMOVE_TRACK)} tracks removed (mean model {np.mean(REMOVE_TRACK):.3})')
 
-            F1_SCORE = f1_score(PRED, TEST_SET['label'], average='micro')
+            F1_SCORE = f1_score(PRED_TEST, TEST_SET['label'], average='micro')
             print(f'\nF1 = {F1_SCORE}')
-            CONF_MATRIX = confusion_matrix(PRED, TEST_SET['label'])
+            CONF_MATRIX = confusion_matrix(PRED_TEST, TEST_SET['label'])
             CONF_MATRIX = CONF_MATRIX/np.sum(to_categorical(TEST_SET['label']), axis=0)*100
             plot_confusion_matrix(CONF_MATRIX, F1_SCORE, PARS)
 
         PRED_SCORING = []
         with tqdm(total=len(SCORE_SET['track_list'])) as pbar:
-            for n, track in enumerate(SCORE_SET['track_list']):
+            for N, track in enumerate(SCORE_SET['track_list']):
                 table = track.table[PARS['lim'][0]:PARS['lim'][1]]
                 if test_track(table, PARS):
                     if track.num_frames <= 100:
