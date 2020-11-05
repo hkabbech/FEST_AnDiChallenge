@@ -100,55 +100,8 @@ if __name__ == "__main__":
     os.makedirs(PARS['save_path'], exist_ok=True)
 
 
-    ## NEURAL NETWORKS
-    ##################
-
-    if PARS['task'] == 1:
-        MODEL = Sequential()
-        MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Bidirectional(LSTM(2**5, return_sequences=True, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Bidirectional(LSTM(2**4, return_sequences=False, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Dense(2**5, activation='relu'))
-        MODEL.add(Dropout(0.2))
-        MODEL.add(Dense(2**4, activation='relu'))
-        MODEL.add(Dropout(0.2))
-        MODEL.add(Dense(2**3, activation='relu'))
-        MODEL.add(Dropout(0.1))
-        MODEL.add(Dense(1))
-        MODEL.compile(loss='mean_squared_error', optimizer='adam', metrics=['MAE', 'accuracy'])
-        MODEL.summary()
-        with open(f'{PARS["save_path"]}/task1_network_summary.txt', 'w') as file:
-            with redirect_stdout(file):
-                MODEL.summary()
-
-
-    elif PARS['task'] == 2:
-        MODEL = Sequential()
-        MODEL.add(Bidirectional(LSTM(2**7, return_sequences=True, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Bidirectional(LSTM(2**5, return_sequences=False, dropout=0.1),
-                                input_shape=(None, PARS['num_features']), merge_mode='concat'))
-        MODEL.add(Dense(2**6, activation='tanh'))
-        MODEL.add(Dropout(0.2))
-        MODEL.add(Dense(2**5, activation='tanh'))
-        MODEL.add(Dropout(0.2))
-        MODEL.add(Dense(2**4, activation='tanh'))
-        MODEL.add(Dropout(0.1))
-        MODEL.add(Dense(PARS['num_states'], activation='softmax'))
-        MODEL.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', 'MAE'])
-        MODEL.summary()
-        with open(f'{PARS["save_path"]}/task2_network_summary.txt', 'w') as file:
-            with redirect_stdout(file):
-                MODEL.summary()
-
-
-    ## TRAIN AND TEST EACH MODEL
-    ############################
+    ## TRAINING OF EACH MODEL
+    #########################
 
     ALL_PREDICT_FUNC = {}
 
@@ -167,6 +120,50 @@ if __name__ == "__main__":
         TRAIN_SET = prepare_dataset('training', PARS)
         VAL_SET = prepare_dataset('validation', PARS)
 
+
+        ## NEURAL NETWORK
+        if PARS['task'] == 1:
+            MODEL = Sequential()
+            MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Bidirectional(LSTM(2**5, return_sequences=True, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Bidirectional(LSTM(2**4, return_sequences=False, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Dense(2**5, activation='relu'))
+            MODEL.add(Dropout(0.2))
+            MODEL.add(Dense(2**4, activation='relu'))
+            MODEL.add(Dropout(0.2))
+            MODEL.add(Dense(2**3, activation='relu'))
+            MODEL.add(Dropout(0.1))
+            MODEL.add(Dense(1))
+            MODEL.compile(loss='mean_squared_error', optimizer='adam', metrics=['MAE', 'accuracy'])
+            MODEL.summary()
+            with open(f'{PARS["save_path"]}/task1_network_summary.txt', 'w') as file:
+                with redirect_stdout(file):
+                    MODEL.summary()
+
+
+        elif PARS['task'] == 2:
+            MODEL = Sequential()
+            MODEL.add(Bidirectional(LSTM(2**7, return_sequences=True, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Bidirectional(LSTM(2**6, return_sequences=True, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Bidirectional(LSTM(2**5, return_sequences=False, dropout=0.1),
+                                    input_shape=(None, PARS['num_features']), merge_mode='concat'))
+            MODEL.add(Dense(2**6, activation='tanh'))
+            MODEL.add(Dropout(0.2))
+            MODEL.add(Dense(2**5, activation='tanh'))
+            MODEL.add(Dropout(0.2))
+            MODEL.add(Dense(2**4, activation='tanh'))
+            MODEL.add(Dropout(0.1))
+            MODEL.add(Dense(PARS['num_states'], activation='softmax'))
+            MODEL.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy', 'MAE'])
+            MODEL.summary()
+            with open(f'{PARS["save_path"]}/task2_network_summary.txt', 'w') as file:
+                with redirect_stdout(file):
+                    MODEL.summary()
 
         ## TRAIN
         print('\nTraining of the model...')
