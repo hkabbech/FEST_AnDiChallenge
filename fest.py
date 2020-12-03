@@ -192,14 +192,14 @@ if __name__ == "__main__":
                 pickle.dump(HISTORY.history, file)
 
         MODEL = load_model(f'{PARS["save_path"]}/LSTM{track_len}/LSTM{track_len}_best_model.h5')
-        @tf.function(experimental_relax_shapes=True)
-        def predict(array):
-            """
-                Prediction using the trained model and with a GPU usage
-            """
-            return MODEL(array)
+        # @tf.function(experimental_relax_shapes=True)
+        # def predict(array):
+        #     """
+        #         Prediction using the trained model and with a GPU usage
+        #     """
+        #     return MODEL(array)
 
-        ALL_PREDICT_FUNC[f'LSTM{track_len}'] = predict
+        ALL_PREDICT_FUNC[f'LSTM{track_len}'] = MODEL #predict
 
 
     ## PREDICTION ON TEST AND SCORING DATASETS
